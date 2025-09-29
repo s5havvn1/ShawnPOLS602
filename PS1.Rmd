@@ -1,0 +1,124 @@
+---
+title: "Problem Set 1 — POLS601"
+author: "Zhengyu Xiao"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+#Simulation
+# Randomly samples n observations from a population with some distribution of traits
+```{r}
+## -----------------------------
+## 0) 总体与真值
+## -----------------------------
+set.seed(123)
+
+N <- 100000
+traits <- c("A","B","C","D")
+p_true  <- c(0.20, 0.10, 0.30, 0.40)
+
+pop <- sample(traits, size = N, replace = TRUE, prob = p_true)    # 总体标签
+p_pop <- as.numeric(prop.table(table(factor(pop, levels = traits))))  # 总体真值
+names(p_pop) <- traits
+
+## -----------------------------
+## 1) 核心函数：给定 n、重复 R 次，返回三组平均比例
+## -----------------------------
+sim_props <- function(n, R = 500){
+  over <- matrix(NA_real_, nrow = R, ncol = 4)
+  trea <- matrix(NA_real_, nrow = R, ncol = 4)
+  ctrl <- matrix(NA_real_, nrow = R, ncol = 4)
+  for(i in 1:R){ #Repeats this process many times
+    samp <- sample(pop, size = n, replace = FALSE) #Randomly samples n observations from a population with some distribution of traits
+    trt  <- rbinom(n, size = 1, prob = 0.5) #Randomly assigns each observation to the treatment or control group with an equal probability
+    over[i, ] <- as.numeric(prop.table(table(factor(samp,             levels = traits))))#每次迭代计算整个样本、treatment、control 三组的比例
+    trea[i, ] <- as.numeric(prop.table(table(factor(samp[trt == 1],   levels = traits))))
+    ctrl[i, ] <- as.numeric(prop.table(table(factor(samp[trt == 0],   levels = traits))))
+  }
+  list(
+    overall = colMeans(over, na.rm = TRUE),
+    treat   = colMeans(trea, na.rm = TRUE),
+    control = colMeans(ctrl, na.rm = TRUE)
+  )
+}
+
+## -----------------------------
+## 2) 选择几个 n 展示“n 越大越接近/越相似”
+## -----------------------------
+ns <- c(25, 200, 1000)   # 你可改；从小到大即可
+
+par(mfrow = c(length(ns), 2), mar = c(4,4,3,1))  # 每个 n 画两张图
+
+for(n in ns){
+  S <- sim_props(n, R = 400)
+
+  ## 图A：overall vs population（看样本比例随 n 逼近真值）
+  mat_over_pop <- rbind(Population = p_pop, Overall = S$overall)   # 2×4，作业要求 5：展示随着 n 增大，样本比例接近总体比例
+  barplot(t(mat_over_pop), beside = TRUE, ylim = c(0, 0.5),
+          main = paste0("Overall vs Population (n=", n, ")"),
+          ylab = "Proportion", col = c("gray70","steelblue"))
+  legend("topright", fill = c("gray70","steelblue"), legend = c("Population","Overall"), bty = "n")
+
+  ## 图B：treatment vs control（看两组随 n 更相似）
+  mat_tc <- rbind(Treatment = S$treat, Control = S$control)        # 2×4，展示随着 n 增大，treatment 与 control 比例更相似
+  barplot(t(mat_tc), beside = TRUE, ylim = c(0, 0.5),
+          main = paste0("Treatment vs Control (n=", n, ")"),
+          ylab = "Proportion", col = c("tomato","seagreen"))
+  legend("topright", fill = c("tomato","seagreen"), legend = c("Treatment","Control"), bty = "n")
+}
+
+par(mfrow = c(1,1))
+
+```
+
+
+# Data Analysis
+```{r}
+library ("dplyr")
+voting <- read.csv("voting.csv")
+
+class(voting$message)
+class(voting$voted)
+class(voting$birth)
+# Treatment is the social pressure message, it is a discrete variable, the data type is character/string
+
+#Create a new treatment variable in your data frame that is a binary version of the existing treatment variable. Your new variable should equal 1 if the observation was treated, and 0 otherwise.
+voting$treatment <- ifelse (voting$message == "yes", 1, 0)
+
+#Compute the average outcome for the treatment group and the average outcome for the control group. Interpret the results by writing 1-2 sentences about what these numbers mean substantively.
+
+avg_outcome <- voting %>% 
+  group_by (treatment) %>% 
+  summarise (avg_outcome = mean (voted, na.rm = TRUE))
+
+avg_outcome_treatment <- avg_outcome$avg_outcome[avg_outcome$treatment == 1]
+avg_outcome_control <- avg_outcome$avg_outcome[avg_outcome$treatment == 0]
+
+avg_outcome_treatment
+avg_outcome_control
+
+# Interpret: The average turnout in the treatment group, who received the social pressure message, was 37.8%, compared to 29.7% in the control group. This indicates that exposure to the social pressure mailing substantially increased the likelihood of voting, raising turnout by about 8 percentage points.
+
+#Use brackets to subset the data frame and create two new data frames, one for the treatment group and one for the control group.
+treatment_data <- voting[voting$treatment == 1, ]
+control_data <- voting[voting$treatment == 0, ]
+
+#What is the average birth year for the treatment and control groups?
+avg_birth_treatment <- mean(treatment_data$birth)
+avg_birth_control <- mean(control_data$birth)
+avg_birth_treatment
+avg_birth_control
+
+#What is the estimated average causal effect for this experiment? Provide the calculated average effect and a substantive interpretation.
+estimated_effect <- avg_outcome_treatment - avg_outcome_control
+
+# Interpret: exposure to the social pressure mailing substantially increased the likelihood of voting, raising turnout by about 8 percentage points
+
+#Suppose we wanted to claim that the estimated causal effect is an estimated effect for the entire U.S. population. What assumption would need to hold for us to make this claim?
+
+# To treat the estimated causal effect from this experiment as the causal effect for the entire U.S. voting-eligible population, we need an external validity assumption. The sample of voters included in the study must be representative of the broader electorate in ways that matter for how the treatment operates, or else we must assume that the effect of receiving a social pressure mailing is constant across different subgroups of voters. In other words, the process by which these voters were sampled should not bias the relationship between the mailing and the decision to vote. In addition, the standard causal assumptions of randomized experiments must hold. The Stable Unit Treatment Value Assumption requires that one person’s turnout decision is not affected by whether others around them received a mailing, and that all treated voters were exposed to the same type of social pressure message. Finally, random assignment must be valid: each voter in the study must have had an equal chance of being assigned to the mailing or no-mailing condition, and this assignment must not be correlated with their underlying propensity to vote.
+
+```
+
+
