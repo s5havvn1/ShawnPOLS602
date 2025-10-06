@@ -1,0 +1,28 @@
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.toc
+*.out
+*.lof
+*.lot
+*.fls
+*.log
+*.fdb_latexmk
+*.synctex.gz
+out/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+
+# R / R Markdown
+.Rhistory
+.Rproj.user/
+.RData
+_cache/
+_site/
+*.utf8.md
+*.knit.md
