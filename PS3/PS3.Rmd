@@ -1,0 +1,164 @@
+---
+title: "PS 3"
+output: html_document
+date: "2025-11-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1 Paper Analysis
+1. Research Goals
+The research goal of this study is to make causal explanation for what causes civil wars. The directed acylical digram in their theory is that
+$economic unfavorable conditions \rightarrow weak state \rightarrow civil war onsets$
+The authors have stated clearly in terms of their theory to identify what is the root cause of civil wars. However, the way they did cannot satisfy a perfect causal identification build off regression.
+Their regression model includes a lot of structural variables 
+
+
+
+
+2. Estimands
+There are 11 hypothess in this paper, and each each one corresponds to an implicit theoretical causal estimand.
+
+For H1: The theoretical estimand for H1 is the average causal effect of higher ethnic or religious diversity on the probability of civil war onset — that is, the difference in civil-war risk between a world where a country has high diversity and a world where the same country has low diversity, all else held constant.The empirical estimand is the change in the log-odds of civil war onset correlated with a one-unit change in ethnic or religious fractionalization, holding other regressors constant.
+
+For H2: The theoretical estimand for H2 is the causal interaction effect of ethnic diversity and income on civil-war onset — that is, how the causal effect of ethnic diversity on civil-war risk differs between a world with higher income and a world with lower income. The empirical estimand is the conditional change in the log-odds of civil war onset associated with diversity at different levels of income, as captured by the coefficient on diversity and any implicit interaction through the model’s functional form, holding other regressors constant.
+
+For H3: The theoretical estimand for H3 is the average causal effect of having an ethnic-majority/large-minority structure on the probability of civil war onset — comparing a world where a country has a pronounced majority–minority structure versus a world where it does not, all else held constant. The empirical estimand is the change in the log-odds of civil war onset associated with the presence of a large-minority ethnic structure, holding other regressors constant.
+
+For H4: The theoretical estimand for H4 is the average causal effect of higher political democracy and civil liberties on the probability of civil war onset — comparing a world where a country possesses strong democratic institutions and freedoms versus a world where it does not, all else held constant.The empirical estimand is the change in the log-odds of civil war onset correlated with a one-unit increase in democracy or civil-liberty measures, holding other regressors constant.
+
+For H5: The theoretical estimand for H5 is the average causal effect of discriminatory language or religious policies on the probability of civil war onset — contrasting a world where such discriminatory policies exist with one where they do not, all else held constant.The empirical estimand is the change in the log-odds of civil war onset associated with the presence of discriminatory language or religious policies, holding other regressors constant.
+
+For H6: The theoretical estimand for H6 is the average causal effect of greater income inequality on the probability of civil war onset — comparing a world with high inequality to a world with low inequality, all else held constant.The empirical estimand is the change in the log-odds of civil war onset correlated with a one-unit increase in income-inequality measures (e.g., Gini), holding other regressors constant.
+
+For H7: The theoretical estimand for H7 is the average causal effect of greater ethnic diversity on the probability of ethnic civil war onset among countries with a minority ≥5% — comparing a world in which diversity is high versus one where it is low, within that subgroup, all else held constant.The empirical estimand is the change in the log-odds of ethnic civil war onset associated with ethnic fractionalization in the ≥5% minority subsample, holding other regressors constant.
+
+For H8: The theoretical estimand for H8 is the average causal effect of rough, poorly connected terrain on the probability of civil war onset — comparing a world where a country has high rough-terrain exposure versus one where it does not, all else held constant. The empirical estimand is the change in the log-odds of civil war onset correlated with a one-unit increase in the log of mountainous terrain, holding other regressors constant.
+
+For H9: The theoretical estimand for H9 is the average causal effect of lower GDP per capita on the probability of civil war onset — that is, the difference in civil-war risk between a world where a country has low income and a world where the same country has high income, all else held constant. The empirical estimand is the change in log-odds of civil war onset correlated with a one-unit change in GDP per capita holding other regressors constant.
+
+For H10: The theoretical estimand for H10 is the average causal effect of each insurgency-favoring political or military condition (new statehood, political instability, anocracy, large population, noncontiguous territory, foreign support, resource-finance potential, or oil dependence) on the probability of civil war onset — comparing worlds with and without each condition, all else held constant. The empirical estimand is the change in the log-odds of civil war onset associated with a one-unit change in each of the listed insurgency-relevant variables, holding other regressors constant.
+
+For H11: The theoretical estimand for H11 is the average causal effect of democracy, civil liberties, income equality, and nondiscriminatory policies after conditioning on state strength on the probability of civil war onset — that is, the causal effect of these “grievance” variables in a world where GDP and other state-capacity indicators are fixed. The empirical estimand is the change in the log-odds of civil war onset associated with democracy, civil liberties, income inequality, and nondiscriminatory linguistic or religious policies conditional on GDP and other controls, holding all regressors constant.
+
+3. Identification Strategy
+Their identification strategy consists of using lagged predictors and extensive controls in a country–year logit model, under the assumption that conditioning on these variables renders GDP and other regressors exogenous with respect to civil-war onset. This design treats the empirical logit coefficients as theoretical causal estimates, but it does not produce identified causal effects, as omitted-variable bias, reverse causality, and structural endogeneity remain. Therefore, the empirical estimand only approximates the theoretical estimand under strong, untested conditional-independence assumptions.
+
+4. Assessment of Findings
+Fearon & Laitin have a powerful causal theory, but their identification strategy is observational and correlational. The regressions do not isolate exogenous variation in some indepedent variables such as GDP, and no instruments, no natural experiments, no fixed-effects identification, so the empirical coefficients cannot be interpreted as causal treatment effects. Their statistical model is a reasonable approximation of the DGP but omits key forms of unobserved heterogeneity and endogeneity. The data measure some structural features well (terrain, population, oil) but measure core theoretical constructs like grievance, ethnic salience, state capacity, and democracy with substantial noise. Thus the identification strategy supports the authors’ claims only in the sense of providing correlational evidence consistent with their causal narrative, not in the sense of establishing credible causal effects.
+
+5. Broader Contribution
+Despite the lack of a modern identification strategy, Fearon and Laitin’s study still meaningfully informs our understanding of civil conflict. Their analysis provides several robust descriptive regularities—such as the strong cross-national association between low state capacity, rough terrain, political instability, and civil-war onset. These correlations are not credible causal estimates on their own, but they successfully falsify a dominant but incorrect narrative that ethnic diversity is the primary driver of civil war. Moreover, the study offers a coherent theoretical framework that organizes empirical patterns and reshapes how scholars conceptualize conflict risk. In this sense, even without strong causal identification, the study advances knowledge by identifying stable empirical patterns, overturning misleading explanations, and offering a compelling theory that guides later causal inquiry.
+
+# Data Analysis
+Q1
+```{r}
+library(dplyr)
+thermo <- read.csv("thermometers.csv")
+survey_year <- 2017
+thermo <- thermo %>% 
+  mutate(age = survey_year - thermo$birth_year)
+```
+
+Q2
+```{r}
+library(ggplot2)
+class(thermo$ft_asian)
+
+thermo %>% 
+summarize(mean_overall_ft_asian = mean(thermo$ft_asian, na.rm = TRUE),
+          median_overall_ft_asian = median(thermo$ft_asian, na.rm = TRUE),
+          var_overall_ft_asian = var(thermo$ft_asian, na.rm = TRUE),
+          sd_overall_ft_asian = sd(thermo$ft_asian, na.rm = TRUE),
+          min_overall = min(thermo$ft_asian, na.rm = TRUE),
+          max_overall = max(thermo$ft_asian, na.rm = TRUE))
+
+thermo %>% 
+  group_by(party_id) %>% 
+  summarize (mean_ft_asian = mean(ft_asian, na.rm = TRUE),
+             median_ft_asian = median(ft_asian, na.rm = TRUE),
+             var_ft_asian = var(ft_asian, na.rm = TRUE),
+             sd_ft_asian = sd(ft_asian, na.rm = TRUE),
+             min = min(ft_asian, na.rm = TRUE),
+             max = max(ft_asian, na.rm = TRUE))
+
+ggplot(thermo, aes(x = ft_asian, fill = party_id))+
+  geom_histogram(aes(y = after_stat (density)), 
+                 position = "identity", alpha = 0.3, bins = 20)+
+  labs(title = "Feeling thermomter towards asian histogram group by party id",
+       x = "Feeling thermometer towards asian",
+       y = "Party Identification") +
+  theme_minimal()
+
+ggplot(thermo, aes(x = ft_asian, fill = party_id))+
+  geom_density(alpha = 0.5)+
+  labs(title = "Feeling thermomter towards asian density group by party id",
+       x = "Feeling thermometer towards asian",
+       y = "Party Identification") +
+  theme_minimal()
+```
+Interpretation: Across all respondents, the average rating on the feeling thermometer toward Asians is 74.19, with a median of 79.
+This indicates that most respondents express generally warm attitudes toward Asians.
+The standard deviation of 21.56 and a full range from 0 to 100 show a moderate spread of opinions—while the majority of respondents rate Asians positively, a small minority still give low ratings, resulting in a fairly wide distribution. 
+
+Breaking this down by party identification, Democrats display the warmest average feeling (mean = 76.76, median = 80), followed by those identifying as “Other” (75.37) and Independents (73.24).
+Respondents who are “Not sure” (72.24) or Republican (72.10) report slightly cooler but still positive average feelings.
+
+Variation within each partisan group is quite similar, with standard deviations around 21–23.
+
+Overall, the data reveal a broadly positive orientation toward Asians, with modest partisan differences in central tendency but no meaningful differences in spread.
+
+Q3
+```{r}
+m1 <- lm(ft_asian ~ as.factor(party_id), thermo)
+
+summary(m1)
+```
+
+Q4
+```{r}
+thermo_1 <- thermo %>% 
+  filter(party_id %in% c("Democrat", "Republican")) %>% 
+  mutate(party_id_binary = ifelse(party_id == "Democrat", 1, 0))
+```
+
+Q5
+```{r}
+m2 <- lm(party_id_binary ~ ft_black + ft_unions + ft_gays + ft_immig + age + educ + ft_immig * educ + ft_gays * age, thermo_1)
+
+summary(m2)
+```
+Interpretation: I include four feeling thermometer variables — ft_black, ft_union,ft_gays, and ft_immig — representing race, labor, gender, and immigration respects. I also include two interaction terms to examine how demographic characteristics condition these effects. The first, ft_immig * educ, tests whether education moderates the relationship between attitudes toward immigrants and partisanship. I expect that higher levels of education may weaken the link between anti-immigration sentiment and Republican identification, as more educated individuals tend to hold more cosmopolitan or inclusive views. The second interaction, ft_gays * age, examines whether the effect of attitudes toward gay and lesbian people on partisanship varies across age groups. I expect that younger respondents will show stronger positive associations between warm feelings toward LGBTQ individuals and Democratic identification, reflecting generational differences in social liberalism.
+
+Q6
+Interpretation: In this multiple linear regression model, the dependent variable party_id_binary is coded as 1 for Democrats and 0 for Republicans. Therefore, the coefficients represent the change in the predicted probability of identifying as a Democrat associated with a one-unit increase in the independent variable, holding all other variables constant.
+
+For example, the coefficient for ft_black (0.00115) means that for each one-point increase on the feeling thermometer toward Black people, the probability of identifying as a Democrat increases by approximately 0.00115, or 0.115 percentage points, on average. Similarly, the coefficient for ft_unions (0.00739) indicates that a one-point increase in warmth toward labor unions increases the probability of being a Democrat by about 0.74 percentage points, holding all other variables constant.
+
+For the interaction terms (ft_immig * educ, ft_gays * age), the coefficients represent how the relationship between the feeling thermometer and party identification changes depending on the level of the interacting variable. For instance, a negative coefficient on ft_gays × age would mean that the effect of attitudes toward gay and lesbian people on Democratic identification weakens as age increases.
+
+Q7
+Use ft_gay as prediction indicator
+```{r}
+library(tidyr)
+prediction_data <- thermo_1 %>% 
+  summarise(across(c(ft_black, ft_unions, ft_immig, age), median, na.rm=TRUE)) %>% 
+  mutate(educ = "4-year")
+
+prediction_data <- crossing(prediction_data, ft_gays = 0:100)
+
+prediction_data$prediction <- predict(m2, prediction_data)
+
+
+ggplot(prediction_data, aes(x = ft_gays, y = prediction))+
+  geom_line()+
+  labs(title = "Predicted Probability of Being a Democrat",
+       x = "Feeling Thermometer toward Gay/Lesbian People (0–100)",
+       y = "Predicted Probability") +
+  theme_minimal()
+```
+Interpretation: The results indicate a strong positive association between warmth toward gay and lesbian people and the probability of identifying as a Democrat. Respondents who express more positive attitudes toward LGBTQ individuals are substantially more likely to identify with the Democratic Party.
+
+However, because this analysis relies on observational survey data, the relationship should be interpreted as correlation, not causal. Differences in underlying ideology, religiosity, or other factors could jointly influence both LGBTQ attitudes and party identification.
