@@ -1,0 +1,138 @@
+---
+title: "Zhengyu Xiao_PS4"
+output: html_document
+date: "2025-09-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. A confounder is a random variable that have causal effect on both the treatment variable and the outcome variable. It is something that we should control in a regression or causal identification. A collider is a random variable that is caused by both the treatment variable and the outcome variable, we should not control it to make sure not openning new back door paths.
+
+2. Conditioning on a collider can create bias by openning a spurious pathway or non-causal correlation that is probability unwanted in the causal identification.
+
+3. Because statistical summaries or correlations alone cannot identify the causal relationship or logic as shown in a DAG. It only shows correlation not causal direction and we wont be able to tell which variables are colliders or confounders so we dont know who to control correctly.
+
+4. A "kitchen sink" regression is trying to put every possible variable in the regression model. We have to consider the different causal pathways and existence of confounders and colliders, which is highly likely given putting a lot of variables in one model. We would not identify the correct causal relationship between the treatment and the outcome. In addition, we will have over-adjustment bias that possibly neglect the causal influence of mediators on the outcomes. 
+
+5. A backdoor path is any path between the treatment and the outcome that starts with an arrow pointing INTO the treatment($D \leftarrow Z \dots \to Y$). It is when unobserved confounder is not controlled or when a collider is controlled such that we have a seperate pathway that might interfere with the real causal pathway and relationship we want to identify. Using mutiple regression, we can condition the confounders to block the backdoor pathways, allowing us to isolate the true causal effect. 
+
+#Part 2 Simulation
+I will use the variables and regression design in my proposed research.
+Treatment variable: the pressure event intensity: $D_{i, t+k}$
+Mediator: the Strategic Calculation of Local Officials/Bureaucrats: $M_{it}$
+Outcome: Semantic Compliance in Local Government Documents $S_{it}$
+Confounder: $X_{it}$
+Collider: $K_{it}$ caused by D and outcome-only shock
+An independent variable that has an exogenous effect on the outcome variable: $Z^{S}_{it}$
+Instrument variable: $Z^{D}_{it}$
+
+```{r}
+install.packages("dagitty", repos = "http://cran.us.r-project.org")
+install.packages("ggdag", repos = "http://cran.us.r-project.org")
+```
+
+
+```{r}
+library(dagitty)
+library(ggdag)
+library(dplyr)
+library(ggplot2)
+theme_set (ggdag::theme_dag())
+```
+
+
+```{r}
+g <- dagitty("
+dag {
+  D -> M
+  M -> S
+  D -> S
+
+  X -> D
+  X -> S
+
+  ZD -> D
+  ZS -> S
+
+  D -> K
+  ZS -> K
+}
+")
+
+coords <- tibble::tribble(
+  ~name, ~x, ~y,
+  "ZD",  0, 0.7,
+  "X",   0, 0.3,
+  "D",   1, 0.5,
+  "M",   2, 0.7,
+  "S",   3, 0.5,
+  "ZS",  2, 0.1,
+  "K",   1.7, 0.3
+)
+
+coordinates(g) <- coords
+
+ggdag(g) +
+  geom_dag_text()
+```
+# Construct Variables
+```{r}
+set.seed(123)
+N <- 300
+X_it <- rnorm(N, 0 ,1)
+Z_D <- rnorm (N, 0 ,1)
+Z_S <- rnorm (N, 0 ,1)
+
+# Treatment (pressure event intensity)
+e_D <- rnorm(N, 0, 1)
+D   <- 0.80*X_it + 0.90*Z_D + e_D
+
+# Mediator: strategic calculation
+e_M <- rnorm(N, 0, 1)
+M   <- 0.60*D + 0.50*X_it + e_M
+
+# Outcome = direct(D) + via(M) + confounding(X) + exogenous outcome shock(Z_S)
+e_S <- rnorm(N, 0, 1)
+S   <- 0.50*D + 0.80*M + 0.40*X_it + 0.70*Z_S + e_S
+
+# Collider: caused by D and Z_S
+e_K <- rnorm(N, 0, 1)
+K   <- 0.70*D + 0.70*Z_S + e_K                     
+
+data <- data.frame(X_it, Z_D, Z_S, D, M, K, S)
+```
+
+# Fit a model that recovers the direct effect of the treatment on the outcome variable.
+```{r}
+m_1 <- lm(S ~ D + M + X_it, data = data)
+summary(m_1)
+```
+To recover the direct effect, we must block the mediated path by conditioning on the mediator M, and close the backdoor via the confounder X_it.
+
+# Fit a model that recovers the total e>ect of the treatment on the outcome variable
+```{r}
+m_2 <- lm(S ~ D + X_it, data = data)
+summary(m_2)
+```
+To recover the total effect, do not condition on the mediator M, but still control the confounder X_it in the model.
+
+# Controlling for the collider, the exogenous independent variable and the instrument.
+```{r}
+m_3 <- lm(S ~ D + K + X_it, data = data)
+m_4 <- lm(S ~ D + Z_S + X_it, data = data)
+m_5 <- lm(S ~ D + Z_D + X_it, data = data)
+summary(m_3)
+summary(m_4)
+summary(m_5)
+```
+Adding the collider K lowered the estimated effect of D from roughly 0.98 to 0.83. Because K is a common effect of D and Z_S, conditioning on it opens a non-causal path between D and Z_S, inducing collider bias and attenuating the estimated effect.
+
+Adding Z_S had almost no effect on the coefficient of D (from ~0.98 to ~1.04) because Z_S affects only the outcome and is independent of D. Controlling it improves precision but does not change causal identification.
+
+Controlling Z_D inflated the estimated effect of D from ≈0.98 to 1.16. Because Z_D provides exogenous variation in D, conditioning on it removes the identifying variation and leaves only the endogenous component, biasing the OLS estimate. Instruments should never be added as control variables.
+
+The selection of variables should be based on the estimand and the causal structure encoded in the DAG. The purpose of controlling variables is to block backdoor confounding paths between the treatment and outcome—not to describe “everything correlated with the outcome.” Therefore, only variables that are true confounders should be included. According to the results, we should control only the confounder not the collider. And control for mediator only when we want to estimate the direct direct effect of the indepedent variable. Controlling for variables that affect only the outcome do not change the estimand and may be added only to improve precision. Do not control for variables that effect only the treatment as a covariate in the OLS. Only control it in a 2SLS design.
+
+
